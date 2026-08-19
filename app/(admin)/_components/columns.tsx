@@ -19,6 +19,7 @@ import {
 import { deleteTenderAction, toggleBidSubmittedAction } from "../lib/action";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { TenderDetailsDialog } from "./tender-details-dialog";
 
 const formatCurrency = (val: number | null | undefined) => {
@@ -101,25 +102,36 @@ export const columns: ColumnDef<Tender>[] = [
       </Button>
     ),
     cell: ({ row }) => {
+      const { data: session } = useSession();
+      const isSuperAdmin = session?.user?.role?.toUpperCase() === "SUPERADMIN";
       const [showDetails, setShowDetails] = useState(false);
       const tender = row.original;
+
       return (
         <div className="max-w-[220px]">
-          <button
-            type="button"
-            onClick={() => setShowDetails(true)}
-            className="font-medium text-foreground hover:text-primary hover:underline text-left truncate block w-full"
-            title="Click to view full details"
-          >
-            {row.getValue("title")}
-          </button>
+          {isSuperAdmin ? (
+            <button
+              type="button"
+              onClick={() => setShowDetails(true)}
+              className="font-medium text-foreground hover:text-primary hover:underline text-left truncate block w-full cursor-pointer"
+              title="Click to view full details"
+            >
+              {row.getValue("title")}
+            </button>
+          ) : (
+            <span className="font-medium text-foreground text-left truncate block w-full">
+              {row.getValue("title")}
+            </span>
+          )}
           <p className="text-xs text-muted-foreground truncate">{tender.client}</p>
 
-          <TenderDetailsDialog
-            tender={tender}
-            open={showDetails}
-            onOpenChange={setShowDetails}
-          />
+          {isSuperAdmin && (
+            <TenderDetailsDialog
+              tender={tender}
+              open={showDetails}
+              onOpenChange={setShowDetails}
+            />
+          )}
         </div>
       );
     },
@@ -160,6 +172,7 @@ export const columns: ColumnDef<Tender>[] = [
       };
       return <Badge variant={variantMap[priority] || "secondary"}>{priority}</Badge>;
     },
+    filterFn: "equals",
   },
   {
     accessorKey: "eligibility",
@@ -179,6 +192,7 @@ export const columns: ColumnDef<Tender>[] = [
         </Badge>
       );
     },
+    filterFn: "equals",
   },
   {
     accessorKey: "isBidSubmitted",
@@ -211,6 +225,7 @@ export const columns: ColumnDef<Tender>[] = [
         </div>
       );
     },
+    filterFn: "equals",
   },
   {
     accessorKey: "lastDate",
@@ -239,6 +254,8 @@ export const columns: ColumnDef<Tender>[] = [
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
+      const { data: session } = useSession();
+      const isSuperAdmin = session?.user?.role?.toUpperCase() === "SUPERADMIN";
       const tender = row.original;
       const [showDetails, setShowDetails] = useState(false);
       const queryClient = useQueryClient();
@@ -268,16 +285,19 @@ export const columns: ColumnDef<Tender>[] = [
 
       return (
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="size-8 p-0 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowDetails(true)}
-            title="View Full Details"
-          >
-            <Eye className="size-4" />
-            <span className="sr-only">View Details</span>
-          </Button>
+          {/* Only SUPERADMIN can see the Quick View Eye button */}
+          {isSuperAdmin && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDetails(true)}
+              title="View Full Details"
+            >
+              <Eye className="size-4" />
+              <span className="sr-only">View Details</span>
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="ghost" className="size-8 p-0" />}>
@@ -285,12 +305,15 @@ export const columns: ColumnDef<Tender>[] = [
               <MoreHorizontal className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuGroup >
+              <DropdownMenuGroup>
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setShowDetails(true)}>
-                  <Eye className="mr-2 size-4 text-primary" />
-                  View 
-                </DropdownMenuItem>
+                {/* Only SUPERADMIN can see the View menu item */}
+                {isSuperAdmin && (
+                  <DropdownMenuItem onClick={() => setShowDetails(true)}>
+                    <Eye className="mr-2 size-4 text-primary" />
+                    View
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleToggle}>
                   {tender.isBidSubmitted ? (
                     <>
@@ -318,11 +341,13 @@ export const columns: ColumnDef<Tender>[] = [
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <TenderDetailsDialog
-            tender={tender}
-            open={showDetails}
-            onOpenChange={setShowDetails}
-          />
+          {isSuperAdmin && (
+            <TenderDetailsDialog
+              tender={tender}
+              open={showDetails}
+              onOpenChange={setShowDetails}
+            />
+          )}
         </div>
       );
     },

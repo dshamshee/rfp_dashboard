@@ -10,7 +10,7 @@ export async function getTendersAction() {
     const tenders = await db
       .select()
       .from(tenderTable)
-      .orderBy(desc(tenderTable.createdAt));
+      .orderBy(desc(tenderTable.createdAt), desc(tenderTable.id));
     return { success: true, data: tenders };
   } catch (error: any) {
     console.error("Failed to fetch tenders:", error);

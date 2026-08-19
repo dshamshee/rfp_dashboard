@@ -1,31 +1,22 @@
-import { defineRelations } from "drizzle-orm";
-import { integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
+
+import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
+import { check, integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  age: integer().notNull(),
+  id: varchar({ length: 128 }).primaryKey().$defaultFn(() => createId()),
+  name: text().notNull(),
   email: varchar({ length: 255 }).notNull().unique(),
-});
+  password: text().notNull(),
+  role: text().notNull()
 
-export const userPost = pgTable("post", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  title: varchar({ length: 255 }).notNull(),
-  content: text().notNull(),
-  authorId: integer().notNull().references(() => usersTable.id),
-});
+}, 
 
-export const userRelations = defineRelations({ usersTable, userPost }, (r) => ({
-  usersTable: {
-    posts: r.many.userPost({
-      from: r.usersTable.id,
-      to: r.userPost.authorId,
-    }),
-  },
-  userPost: {
-    author: r.one.usersTable({
-      from: r.userPost.authorId,
-      to: r.usersTable.id,
-    }),
-  },
-}));
+(table) => [
+  check(
+    "role_type_check",
+    sql`role in ('ADMIN','SUPERADMIN')`,
+  ),
+]
+);
+

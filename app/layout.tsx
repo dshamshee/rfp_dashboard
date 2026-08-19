@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import QueryProvider from "@/components/query-provider";
+import { SessionProvider } from "@/components/session-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 
@@ -22,12 +23,14 @@ export default function RootLayout({
       className={cn("h-full antialiased font-sans")}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <QueryProvider>
-          <TooltipProvider>
-            {children}
-            <Toaster position="top-right" richColors />
-          </TooltipProvider>
-        </QueryProvider>
+        <SessionProvider>
+          <QueryProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster position="top-right" richColors />
+            </TooltipProvider>
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   );

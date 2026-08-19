@@ -43,6 +43,7 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row: any) => row.id,
     state: {
       sorting,
       columnFilters,
@@ -63,15 +64,19 @@ export function DataTable<TData, TValue>({
     <div className="space-y-4">
       {/* Print-Only Header */}
       <div className="hidden print:block print:mb-6">
-        <h1 className="text-2xl font-bold">RFP Tender Summary Report</h1>
-        <p className="text-sm text-gray-500">
-          Generated on: {new Date().toLocaleDateString("en-IN", { dateStyle: "full" })}
-        </p>
+        <h1 className="text-2xl font-bold text-black">RFP Tender Summary Report</h1>
+        <div className="flex justify-between items-center text-xs text-gray-600 mt-1 border-b border-black pb-2">
+          <p>Generated on: {new Date().toLocaleDateString("en-IN", { dateStyle: "full" })}</p>
+          <p className="font-bold text-black">
+            Total Filtered Tenders: {table.getFilteredRowModel().rows.length}
+          </p>
+        </div>
       </div>
 
       <TenderTableToolbar table={table} data={data as Tender[]} />
 
-      <div className="rounded-md border bg-card shadow-sm">
+      {/* Screen Interactive Table (Paginated 10 per page) */}
+      <div className="rounded-md border bg-card shadow-sm print:hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -120,10 +125,62 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
+      {/* Print-Only Full Table (Renders ALL filtered records across all pages) */}
+      <div className="hidden print:block">
+        <Table className="w-full text-xs border-collapse">
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={`print-header-${headerGroup.id}`}>
+                {headerGroup.headers
+                  .filter((header) => header.id !== "actions")
+                  .map((header) => (
+                    <TableHead key={header.id} className="font-bold text-black border-b border-black py-2 px-1">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getFilteredRowModel().rows?.length ? (
+              table.getFilteredRowModel().rows.map((row) => (
+                <TableRow key={`print-row-${row.id}`} className="border-b border-gray-300">
+                  {row
+                    .getVisibleCells()
+                    .filter((cell) => cell.column.id !== "actions")
+                    .map((cell) => (
+                      <TableCell key={cell.id} className="py-2 px-1 text-black">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length - 1}
+                  className="h-24 text-center text-gray-500"
+                >
+                  No tenders match the selected filters.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
       {/* Pagination Controls */}
       <div className="flex items-center justify-between py-2 print:hidden">
         <div className="text-xs text-muted-foreground">
-          Showing {table.getFilteredRowModel().rows.length} tender(s)
+          Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} filtered tender(s)
         </div>
         <div className="flex items-center space-x-2">
           <Button
