@@ -107,7 +107,7 @@ function LoginForm() {
             <FileSpreadsheet className="size-6" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            RFP Dashboard
+            Magnetix Infosystems Devlopment
           </h1>
           <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
             <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
