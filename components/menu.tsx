@@ -4,7 +4,6 @@ import { Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +22,7 @@ export function Menu({ isOpen }: MenuProps) {
   const menuList = getMenuList(pathname);
 
   return (
-    <ScrollArea className="h-full [&>div>div[style]]:!block">
+    <div className="w-full flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <nav className="mt-8 h-full w-full">
         <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start gap-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
           {menuList.map(({ groupLabel, menus }) => (
@@ -105,6 +104,6 @@ export function Menu({ isOpen }: MenuProps) {
           ))}
         </ul>
       </nav>
-    </ScrollArea>
+    </div>
   );
 }

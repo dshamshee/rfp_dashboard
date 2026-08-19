@@ -26,7 +26,7 @@ export function Sidebar() {
       <div
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
-        className="relative flex h-full flex-col overflow-y-auto bg-sidebar px-3 py-4 shadow-md dark:shadow-zinc-800"
+        className="relative flex h-full flex-col overflow-hidden bg-sidebar px-3 py-4 shadow-md dark:shadow-zinc-800"
       >
         <Link
           href="/"
@@ -44,7 +44,7 @@ export function Sidebar() {
                 : "translate-x-0 opacity-100"
             )}
           >
-            RFP Dashboard
+            Magnetix Infosystems
           </h1>
         </Link>
         <Menu isOpen={getOpenState()} />

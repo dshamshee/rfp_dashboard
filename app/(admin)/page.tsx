@@ -5,7 +5,7 @@ import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 import { useGetTendersQuery } from "./query/get-tenders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, DollarSign, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { CheckCircle2, DollarSign, FileSpreadsheet, AlertTriangle, IndianRupee } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: tenders = [], isLoading, error } = useGetTendersQuery();
@@ -74,7 +74,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Portfolio Value
               </CardTitle>
-              <DollarSign className="size-4 text-muted-foreground" />
+              <IndianRupee className="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold truncate">{formatCurrency(totalValue)}</div>
