@@ -47,6 +47,7 @@ export const tenderFormSchema = z.object({
   nextAction: z.string().optional(),
   nextActionDate: z.date().optional().nullable(),
   remarks: z.string().optional(),
+  documentUrl: z.string().optional().nullable(),
 });
 
 export type TenderFormData = z.infer<typeof tenderFormSchema>;

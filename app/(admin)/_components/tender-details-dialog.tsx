@@ -22,6 +22,7 @@ import {
   Tag,
   User,
   TrendingUp,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -125,6 +126,29 @@ export function TenderDetailsDialog({
         </DialogHeader>
 
         <div className="space-y-6 pt-2">
+          {/* View PDF Document Banner/Button */}
+          {tender.documentUrl && (
+            <div className="flex items-center justify-between p-3.5 rounded-xl border bg-primary/5 border-primary/20">
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-red-600 text-white shadow-sm">
+                  <FileText className="size-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Official Tender PDF Document</p>
+                  <p className="text-xs text-muted-foreground">Uploaded & Compressed RFP File</p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => window.open(tender.documentUrl || "", "_blank")}
+                className="gap-1.5 font-semibold"
+              >
+                <ExternalLink className="size-3.5" />
+                View PDF Document
+              </Button>
+            </div>
+          )}
+
           {/* Key Financial Summary */}
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">

@@ -1,10 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, PlusCircle, RotateCcw } from "lucide-react";
+import {
+  Loader2,
+  PlusCircle,
+  RotateCcw,
+  FileText,
+  CheckCircle2,
+  ExternalLink,
+} from "lucide-react";
 import { tenderFormSchema, TenderFormData } from "../lib/zod-type/tender-type";
 import { useAddTenderMutation } from "../query/mut-add-tender";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -24,6 +33,12 @@ import {
 export function TenderForm() {
   const router = useRouter();
   const addTenderMutation = useAddTenderMutation();
+
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [uploadedPdfInfo, setUploadedPdfInfo] = useState<{
+    originalSizeKb: number;
+    compressedSizeKb: number;
+  } | null>(null);
 
   const form = useForm<TenderFormData>({
     resolver: zodResolver(tenderFormSchema) as any,
@@ -40,6 +55,7 @@ export function TenderForm() {
       commercialStatus: "Pending",
       emdStatus: "Pending",
       awardStatus: "In Progress",
+      documentUrl: "",
     },
   });
 
@@ -52,11 +68,64 @@ export function TenderForm() {
     formState: { errors },
   } = form;
 
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
+      toast.error("Invalid file type. Please select a valid PDF document.");
+      e.target.value = "";
+      return;
+    }
+
+    const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB limit
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error(
+        `Selected PDF (${(file.size / (1024 * 1024)).toFixed(
+          2
+        )} MB) exceeds 2MB limit. Please select a file up to 2MB.`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    setIsUploadingPdf(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload/pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (result.success && result.url) {
+        setValue("documentUrl", result.url);
+        setUploadedPdfInfo({
+          originalSizeKb: result.originalSizeKb,
+          compressedSizeKb: result.compressedSizeKb,
+        });
+        toast.success(
+          `PDF uploaded & compressed successfully (${result.originalSizeKb} KB → ${result.compressedSizeKb} KB)!`
+        );
+      } else {
+        toast.error(result.error || "Failed to upload PDF document.");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error uploading PDF document.");
+    } finally {
+      setIsUploadingPdf(false);
+    }
+  };
+
   const onSubmit = (data: TenderFormData) => {
     addTenderMutation.mutate(data, {
       onSuccess: () => {
         toast.success("Tender created successfully!");
         reset();
+        setUploadedPdfInfo(null);
         router.push("/");
       },
       onError: (err: any) => {
@@ -99,6 +168,77 @@ export function TenderForm() {
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input id="location" placeholder="e.g. Mumbai, MH" {...register("location")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tender Document PDF Upload Card */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <FileText className="size-5 text-primary" />
+                Tender Document (PDF)
+              </CardTitle>
+              <CardDescription>
+                Upload official tender RFP document (PDF format, max 2MB limit, auto-compressed on backend)
+              </CardDescription>
+            </div>
+            {watch("documentUrl") && (
+              <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700">
+                <CheckCircle2 className="mr-1 size-3.5" /> PDF Attached
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 items-center">
+            <div className="space-y-2">
+              <Label htmlFor="pdfFile">Select PDF File (Max 2MB)</Label>
+              <Input
+                id="pdfFile"
+                type="file"
+                accept="application/pdf"
+                disabled={isUploadingPdf}
+                onChange={handlePdfUpload}
+                className="cursor-pointer bg-background"
+              />
+            </div>
+
+            {isUploadingPdf && (
+              <div className="flex items-center gap-2 text-xs font-medium text-primary animate-pulse pt-6">
+                <Loader2 className="size-4 animate-spin" />
+                <span>Compressing PDF to ~50KB & uploading to Cloudinary...</span>
+              </div>
+            )}
+
+            {uploadedPdfInfo && !isUploadingPdf && watch("documentUrl") && (
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
+                <div className="text-xs space-y-0.5">
+                  <p className="font-semibold text-foreground flex items-center gap-1">
+                    <FileText className="size-3.5 text-red-600" />
+                    Compressed PDF Attached
+                  </p>
+                  <p className="text-muted-foreground">
+                    Original: {uploadedPdfInfo.originalSizeKb} KB → Compressed:{" "}
+                    <strong className="text-emerald-600 font-bold">
+                      {uploadedPdfInfo.compressedSizeKb} KB
+                    </strong>
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(watch("documentUrl") || "", "_blank")}
+                  className="h-8 text-xs gap-1"
+                >
+                  <ExternalLink className="size-3.5" />
+                  View PDF
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -350,11 +490,11 @@ export function TenderForm() {
 
       {/* Form Action Buttons */}
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button type="button" variant="outline" onClick={() => reset()} disabled={addTenderMutation.isPending}>
+        <Button type="button" variant="outline" onClick={() => reset()} disabled={addTenderMutation.isPending || isUploadingPdf}>
           <RotateCcw className="mr-2 size-4" />
           Reset Form
         </Button>
-        <Button type="submit" disabled={addTenderMutation.isPending}>
+        <Button type="submit" disabled={addTenderMutation.isPending || isUploadingPdf}>
           {addTenderMutation.isPending ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />

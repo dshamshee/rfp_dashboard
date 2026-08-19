@@ -34,6 +34,7 @@ export const tenderTable = pgTable("tender", {
   nextAction: text("next_action"),
   nextActionDate: timestamp("next_action_date"),
   remarks: text("remarks"),
+  documentUrl: text("document_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

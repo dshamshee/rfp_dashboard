@@ -40,6 +40,7 @@ export async function createTenderAction(data: TenderFormData) {
       nextAction: validatedData.nextAction || null,
       nextActionDate: validatedData.nextActionDate || null,
       remarks: validatedData.remarks || null,
+      documentUrl: validatedData.documentUrl || null,
     }).returning();
 
     revalidatePath("/");

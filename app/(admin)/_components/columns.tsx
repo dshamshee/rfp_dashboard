@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, Eye, MoreHorizontal, Trash2, XCircle } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Eye, FileText, MoreHorizontal, Trash2, XCircle } from "lucide-react";
 import { Tender } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +124,17 @@ export const columns: ColumnDef<Tender>[] = [
             </span>
           )}
           <p className="text-xs text-muted-foreground truncate">{tender.client}</p>
+          {tender.documentUrl && (
+            <a
+              href={tender.documentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 dark:text-red-400 hover:underline mt-0.5"
+              title="View Uploaded PDF Document"
+            >
+              <FileText className="size-3" /> PDF Document
+            </a>
+          )}
 
           {isSuperAdmin && (
             <TenderDetailsDialog
@@ -312,6 +323,12 @@ export const columns: ColumnDef<Tender>[] = [
                   <DropdownMenuItem onClick={() => setShowDetails(true)}>
                     <Eye className="mr-2 size-4 text-primary" />
                     View
+                  </DropdownMenuItem>
+                )}
+                {tender.documentUrl && (
+                  <DropdownMenuItem onClick={() => window.open(tender.documentUrl || "", "_blank")}>
+                    <FileText className="mr-2 size-4 text-red-600" />
+                    View PDF Document
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={handleToggle}>
