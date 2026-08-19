@@ -128,3 +128,25 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  aside,
+  header,
+  footer,
+  .print\:hidden {
+    display: none !important;
+  }
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}

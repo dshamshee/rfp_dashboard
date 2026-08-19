@@ -1,0 +1,373 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Loader2, PlusCircle, RotateCcw } from "lucide-react";
+import { tenderFormSchema, TenderFormData } from "../lib/zod-type/tender-type";
+import { useAddTenderMutation } from "../query/mut-add-tender";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export function TenderForm() {
+  const router = useRouter();
+  const addTenderMutation = useAddTenderMutation();
+
+  const form = useForm<TenderFormData>({
+    resolver: zodResolver(tenderFormSchema) as any,
+    defaultValues: {
+      tenderId: "",
+      client: "",
+      title: "",
+      location: "",
+      isBidSubmitted: false,
+      priority: undefined,
+      eligibility: undefined,
+      stage: "Draft",
+      technicalStatus: "Pending",
+      commercialStatus: "Pending",
+      emdStatus: "Pending",
+      awardStatus: "In Progress",
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = form;
+
+  const onSubmit = (data: TenderFormData) => {
+    addTenderMutation.mutate(data, {
+      onSuccess: () => {
+        toast.success("Tender created successfully!");
+        reset();
+        router.push("/");
+      },
+      onError: (err: any) => {
+        toast.error(err.message || "Failed to create tender");
+      },
+    });
+  };
+
+  const formatDateForInput = (dateVal: Date | undefined) => {
+    if (!dateVal) return "";
+    return new Date(dateVal).toISOString().split("T")[0];
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+      {/* Basic Details Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>Enter general details about the tender and client</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="title">Tender Title *</Label>
+            <Input id="title" placeholder="e.g. Supply & Installation of Hardware" {...register("title")} />
+            {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="client">Client Name *</Label>
+            <Input id="client" placeholder="e.g. PWD Maharashtra" {...register("client")} />
+            {errors.client && <p className="text-xs text-destructive">{errors.client.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tenderId">Tender Reference ID</Label>
+            <Input id="tenderId" placeholder="e.g. TND/2026/001" {...register("tenderId")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input id="location" placeholder="e.g. Mumbai, MH" {...register("location")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Financial Details Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Financial Information</CardTitle>
+          <CardDescription>Amounts related to tender value, EMD, and fees</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="tenderValue">Tender Value (₹)</Label>
+            <Input id="tenderValue" type="number" placeholder="5000000" {...register("tenderValue")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emd">EMD Amount (₹)</Label>
+            <Input id="emd" type="number" placeholder="100000" {...register("emd")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tenderFee">Tender Fee (₹)</Label>
+            <Input id="tenderFee" type="number" placeholder="5000" {...register("tenderFee")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Key Dates Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Important Dates</CardTitle>
+          <CardDescription>Timeline of tender milestones</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="publishDate">Publish Date *</Label>
+            <Input
+              id="publishDate"
+              type="date"
+              value={formatDateForInput(watch("publishDate"))}
+              onChange={(e) => setValue("publishDate", new Date(e.target.value))}
+            />
+            {errors.publishDate && <p className="text-xs text-destructive">{errors.publishDate.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="preBidDate">Pre-Bid Date *</Label>
+            <Input
+              id="preBidDate"
+              type="date"
+              value={formatDateForInput(watch("preBidDate"))}
+              onChange={(e) => setValue("preBidDate", new Date(e.target.value))}
+            />
+            {errors.preBidDate && <p className="text-xs text-destructive">{errors.preBidDate.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastDate">Last Date of Submission *</Label>
+            <Input
+              id="lastDate"
+              type="date"
+              value={formatDateForInput(watch("lastDate"))}
+              onChange={(e) => setValue("lastDate", new Date(e.target.value))}
+            />
+            {errors.lastDate && <p className="text-xs text-destructive">{errors.lastDate.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="openingDate">Opening Date *</Label>
+            <Input
+              id="openingDate"
+              type="date"
+              value={formatDateForInput(watch("openingDate"))}
+              onChange={(e) => setValue("openingDate", new Date(e.target.value))}
+            />
+            {errors.openingDate && <p className="text-xs text-destructive">{errors.openingDate.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="submissionDate">Actual Submission Date *</Label>
+            <Input
+              id="submissionDate"
+              type="date"
+              value={formatDateForInput(watch("submissionDate"))}
+              onChange={(e) => setValue("submissionDate", new Date(e.target.value))}
+            />
+            {errors.submissionDate && <p className="text-xs text-destructive">{errors.submissionDate.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expectedResultDate">Expected Result Date *</Label>
+            <Input
+              id="expectedResultDate"
+              type="date"
+              value={formatDateForInput(watch("expectedResultDate"))}
+              onChange={(e) => setValue("expectedResultDate", new Date(e.target.value))}
+            />
+            {errors.expectedResultDate && <p className="text-xs text-destructive">{errors.expectedResultDate.message}</p>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Evaluation & Status Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Evaluation & Status</CardTitle>
+          <CardDescription>Priority, eligibility, and stage tracking</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <Select
+              value={watch("priority") || ""}
+              onValueChange={(val) => setValue("priority", val as any)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="HIGH">HIGH</SelectItem>
+                <SelectItem value="MEDIUM">MEDIUM</SelectItem>
+                <SelectItem value="LOW">LOW</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Eligibility</Label>
+            <Select
+              value={watch("eligibility") || ""}
+              onValueChange={(val) => setValue("eligibility", val as any)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Eligibility" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ELIGIBLE">ELIGIBLE</SelectItem>
+                <SelectItem value="NOT ELIGIBLE">NOT ELIGIBLE</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="stage">Current Stage</Label>
+            <Input id="stage" placeholder="e.g. Technical Evaluation" {...register("stage")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="technicalStatus">Technical Status</Label>
+            <Input id="technicalStatus" placeholder="e.g. Qualified" {...register("technicalStatus")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="commercialStatus">Commercial Status</Label>
+            <Input id="commercialStatus" placeholder="e.g. L1 Bidder" {...register("commercialStatus")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emdStatus">EMD Status</Label>
+            <Input id="emdStatus" placeholder="e.g. Deposited / Exempted" {...register("emdStatus")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bid Submission & Quotation Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Bid & Commercials</CardTitle>
+          <CardDescription>Our quotation and margin details</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="flex items-center space-x-3 pt-6">
+            <Switch
+              id="isBidSubmitted"
+              checked={watch("isBidSubmitted")}
+              onCheckedChange={(checked) => setValue("isBidSubmitted", checked)}
+            />
+            <Label htmlFor="isBidSubmitted" className="cursor-pointer font-medium">
+              Bid Submitted
+            </Label>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ourQuotation">Our Quotation (₹)</Label>
+            <Input id="ourQuotation" type="number" placeholder="4800000" {...register("ourQuotation")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expectedMargin">Expected Margin (%)</Label>
+            <Input id="expectedMargin" type="number" step="0.1" placeholder="12.5" {...register("expectedMargin")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expectedMarginRupees">Expected Margin (₹)</Label>
+            <Input id="expectedMarginRupees" type="number" placeholder="600000" {...register("expectedMarginRupees")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="awardStatus">Award Status</Label>
+            <Input id="awardStatus" placeholder="e.g. Awarded / Under Review" {...register("awardStatus")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="competitor">Main Competitor</Label>
+            <Input id="competitor" placeholder="e.g. ABC Technologies" {...register("competitor")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ownership & Remarks Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Assignment & Remarks</CardTitle>
+          <CardDescription>Responsible personnel and next action follow-up</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="responsiblePerson">Responsible Person</Label>
+            <Input id="responsiblePerson" placeholder="e.g. John Doe" {...register("responsiblePerson")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="partner">Partner Company</Label>
+            <Input id="partner" placeholder="e.g. XYZ Solutions" {...register("partner")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nextAction">Next Action</Label>
+            <Input id="nextAction" placeholder="e.g. Submit Bank Guarantee" {...register("nextAction")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nextActionDate">Next Action Date</Label>
+            <Input
+              id="nextActionDate"
+              type="date"
+              value={formatDateForInput(watch("nextActionDate") ?? undefined)}
+              onChange={(e) => setValue("nextActionDate", e.target.value ? new Date(e.target.value) : null)}
+            />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="remarks">Remarks / Notes</Label>
+            <Textarea id="remarks" rows={3} placeholder="Additional details or instructions..." {...register("remarks")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Form Action Buttons */}
+      <div className="flex items-center justify-end gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={() => reset()} disabled={addTenderMutation.isPending}>
+          <RotateCcw className="mr-2 size-4" />
+          Reset Form
+        </Button>
+        <Button type="submit" disabled={addTenderMutation.isPending}>
+          {addTenderMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Saving Tender...
+            </>
+          ) : (
+            <>
+              <PlusCircle className="mr-2 size-4" />
+              Save Tender
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+}
