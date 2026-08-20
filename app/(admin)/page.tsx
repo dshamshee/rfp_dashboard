@@ -1,19 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { ContentLayout } from "@/components/content-layout";
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 import { useGetTendersQuery } from "./query/get-tenders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, DollarSign, FileSpreadsheet, AlertTriangle, IndianRupee } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  CheckCircle2,
+  FileSpreadsheet,
+  AlertTriangle,
+  IndianRupee,
+  Eye,
+  EyeOff,
+  TrendingUp,
+} from "lucide-react";
 
 export default function DashboardPage() {
+  const [showTable, setShowTable] = useState(false);
   const { data: tenders = [], isLoading, error } = useGetTendersQuery();
 
   const totalTenders = tenders.length;
   const submittedBids = tenders.filter((t) => t.isBidSubmitted).length;
   const highPriorityCount = tenders.filter((t) => t.priority === "HIGH").length;
   const totalValue = tenders.reduce((acc, t) => acc + (t.tenderValue || 0), 0);
+  const submissionRate = totalTenders ? Math.round((submittedBids / totalTenders) * 100) : 0;
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -27,75 +39,149 @@ export default function DashboardPage() {
     <ContentLayout title="Dashboard">
       <div className="space-y-6">
         {/* KPI Summary Cards */}
-        <div className="grid gap-4 print:hidden sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+        <div className="grid gap-5 print:hidden sm:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Total Tenders */}
+          <Card className="relative overflow-hidden border border-border/80 bg-gradient-to-b from-card via-card to-indigo-500/[0.03] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/40 hover:shadow-lg">
+            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-indigo-500 to-blue-500" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Total Tenders
               </CardTitle>
-              <FileSpreadsheet className="size-4 text-muted-foreground" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:bg-indigo-400/20 dark:text-indigo-400">
+                <FileSpreadsheet className="size-4" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalTenders}</div>
-              <p className="text-xs text-muted-foreground">Active in dashboard</p>
+            <CardContent className="pb-5">
+              <div className="flex items-baseline justify-between">
+                <div className="text-3xl font-extrabold tracking-tight">{totalTenders}</div>
+                <Button
+                  variant={showTable ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setShowTable((prev) => !prev)}
+                  className="h-8 gap-1.5 text-xs font-semibold shadow-2xs transition-all hover:scale-102"
+                >
+                  {showTable ? (
+                    <>
+                      <EyeOff className="size-3.5" />
+                      Hide Table
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="size-3.5" />
+                      View Table
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="inline-block size-2 rounded-full bg-indigo-500 animate-pulse" />
+                {showTable ? "Table visible below" : "Click to view tenders table"}
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          {/* Card 2: Bids Submitted */}
+          <Card className="relative overflow-hidden border border-border/80 bg-gradient-to-b from-card via-card to-emerald-500/[0.03] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-lg">
+            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Bids Submitted
               </CardTitle>
-              <CheckCircle2 className="size-4 text-emerald-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/20 dark:text-emerald-400">
+                <CheckCircle2 className="size-4" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{submittedBids}</div>
-              <p className="text-xs text-muted-foreground">
-                {totalTenders ? Math.round((submittedBids / totalTenders) * 100) : 0}% submission rate
+            <CardContent className="pb-5">
+              <div className="flex items-baseline justify-between">
+                <div className="text-3xl font-extrabold tracking-tight">{submittedBids}</div>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp className="size-3" />
+                  {submissionRate}%
+                </span>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-3.5">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${submissionRate}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {submittedBids} of {totalTenders} bids submitted
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: High Priority */}
+          <Card className="relative overflow-hidden border border-border/80 bg-gradient-to-b from-card via-card to-rose-500/[0.03] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-rose-500/40 hover:shadow-lg">
+            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-rose-500 to-orange-500" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                High Priority
+              </CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:bg-rose-400/20 dark:text-rose-400">
+                <AlertTriangle className="size-4" />
+              </div>
+            </CardHeader>
+            <CardContent className="pb-5">
+              <div className="flex items-baseline justify-between">
+                <div className="text-3xl font-extrabold tracking-tight text-rose-600 dark:text-rose-400">
+                  {highPriorityCount}
+                </div>
+                {highPriorityCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-600 dark:text-rose-400 animate-pulse">
+                    Action Needed
+                  </span>
+                )}
+              </div>
+              <p className="mt-3.5 text-xs text-muted-foreground">
+                Tenders requiring urgent review & submission
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                High Priority
+          {/* Card 4: Total Portfolio Value */}
+          <Card className="relative overflow-hidden border border-border/80 bg-gradient-to-b from-card via-card to-sky-500/[0.03] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/40 hover:shadow-lg">
+            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-sky-500 to-indigo-500" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Portfolio Value
               </CardTitle>
-              <AlertTriangle className="size-4 text-rose-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:bg-sky-400/20 dark:text-sky-400">
+                <IndianRupee className="size-4" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{highPriorityCount}</div>
-              <p className="text-xs text-muted-foreground">Require immediate attention</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Portfolio Value
-              </CardTitle>
-              <IndianRupee className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold truncate">{formatCurrency(totalValue)}</div>
-              <p className="text-xs text-muted-foreground">Sum of tender values</p>
+            <CardContent className="pb-5">
+              <div className="text-2xl font-extrabold tracking-tight truncate text-foreground">
+                {formatCurrency(totalValue)}
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Sum of all tender values</span>
+                <span className="font-medium text-sky-600 dark:text-sky-400 font-mono">INR</span>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Data Table */}
-        {isLoading ? (
-          <div className="flex h-48 items-center justify-center rounded-md border bg-card">
-            <p className="text-sm text-muted-foreground">Loading tenders data...</p>
+        {/* Main Data Table (Hidden by default, shown via toggle) */}
+        {showTable && (
+          <div className="pt-2 transition-all">
+            {isLoading ? (
+              <div className="flex h-48 items-center justify-center rounded-md border bg-card">
+                <p className="text-sm text-muted-foreground">Loading tenders data...</p>
+              </div>
+            ) : error ? (
+              <div className="flex h-48 items-center justify-center rounded-md border border-destructive bg-destructive/10 p-4 text-center">
+                <p className="text-sm font-medium text-destructive">
+                  Error loading tenders. Make sure database connection is configured.
+                </p>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={tenders} />
+            )}
           </div>
-        ) : error ? (
-          <div className="flex h-48 items-center justify-center rounded-md border border-destructive bg-destructive/10 p-4 text-center">
-            <p className="text-sm text-destructive font-medium">
-              Error loading tenders. Make sure database connection is configured.
-            </p>
-          </div>
-        ) : (
-          <DataTable columns={columns} data={tenders} />
         )}
       </div>
     </ContentLayout>

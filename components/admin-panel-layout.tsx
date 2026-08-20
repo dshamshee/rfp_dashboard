@@ -24,7 +24,7 @@ export default function AdminPanelLayout({
       <Sidebar />
       <main
         className={cn(
-          "min-h-[calc(100vh-56px)] bg-zinc-50 transition-[margin-left] duration-300 ease-in-out dark:bg-zinc-900",
+          "min-h-[calc(100vh-56px)] transition-[margin-left] duration-300 ease-in-out",
           !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72")
         )}
       >
