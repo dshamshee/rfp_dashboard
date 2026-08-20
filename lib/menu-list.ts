@@ -1,4 +1,4 @@
-import { LayoutDashboard, FilePlus2 } from "lucide-react";
+import { LayoutDashboard, FilePlus2, Sparkles } from "lucide-react";
 import type { ComponentType } from "react";
 
 type Submenu = { href: string; label: string; active?: boolean };
@@ -34,6 +34,12 @@ export function getMenuList(pathname: string): Group[] {
           label: "New Tender",
           icon: FilePlus2,
           active: pathname.startsWith("/new-tender"),
+        },
+        {
+          href: "/ai-extract",
+          label: "AI Extract",
+          icon: Sparkles,
+          active: pathname.startsWith("/ai-extract"),
         },
       ],
     },
