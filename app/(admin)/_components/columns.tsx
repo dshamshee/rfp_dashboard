@@ -336,19 +336,20 @@ export const columns: ColumnDef<Tender>[] = [
                     View PDF Document
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={handleToggle}>
+                {/* <DropdownMenuItem onClick={handleToggle}>
                   {tender.isBidSubmitted ? (
+                    <>
+                      <CheckCircle2 className="mr-2 size-4 text-emerald-500" />
+
+                      Submitted
+                    </>
+                  ) : (
                     <>
                       <XCircle className="mr-2 size-4 text-amber-500" />
                       Not Submitted
                     </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="mr-2 size-4 text-emerald-500" />
-                      Submitted
-                    </>
                   )}
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem onClick={() => {
                   navigator.clipboard.writeText(tender.id);
                   toast.success("Tender ID copied to clipboard");
