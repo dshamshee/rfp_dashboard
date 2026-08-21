@@ -131,11 +131,11 @@ export function TenderDetailsDialog({
             <DialogDescription className="flex items-center gap-2 text-sm text-muted-foreground">
               <Building2 className="size-4 text-primary" />
               <span className="font-medium text-foreground">{tender.client}</span>
-              {tender.location && (
+              {(tender.district || tender.state) && (
                 <>
                   <span>•</span>
                   <MapPin className="size-3.5" />
-                  <span>{tender.location}</span>
+                  <span>{[tender.district, tender.state].filter(Boolean).join(", ")}</span>
                 </>
               )}
             </DialogDescription>

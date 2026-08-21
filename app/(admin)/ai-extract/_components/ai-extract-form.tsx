@@ -56,6 +56,8 @@ interface ExtractedResponse {
   documentUrl?: string | null;
 }
 
+import { STATE_DISTRICT_DATA } from "@/lib/state-district";
+
 export function AiExtractForm() {
   const router = useRouter();
   const addTenderMutation = useAddTenderMutation();
@@ -73,7 +75,8 @@ export function AiExtractForm() {
       tenderId: "",
       client: "",
       title: "",
-      location: "",
+      state: "",
+      district: "",
       isBidSubmitted: false,
       priority: undefined,
       eligibility: undefined,
@@ -94,6 +97,11 @@ export function AiExtractForm() {
     reset,
     formState: { errors },
   } = form;
+
+  const selectedState = (watch("state") || "") as string;
+  const selectedDistrict = (watch("district") || "") as string;
+  const districtOptions =
+    STATE_DISTRICT_DATA.states.find((s) => s.state === selectedState)?.districts || [];
 
   const handleFileSelect = (file: File) => {
     if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
@@ -166,7 +174,23 @@ export function AiExtractForm() {
       if (data.tenderId) { setValue("tenderId", data.tenderId); filledFields.add("tenderId"); }
       if (data.title) { setValue("title", data.title); filledFields.add("title"); }
       if (data.client) { setValue("client", data.client); filledFields.add("client"); }
-      if (data.location) { setValue("location", data.location); filledFields.add("location"); }
+      if (data.location) {
+        // Try matching state from location string if extracted
+        const matchedState = STATE_DISTRICT_DATA.states.find((s) =>
+          data.location?.toLowerCase().includes(s.state.toLowerCase())
+        );
+        if (matchedState) {
+          setValue("state", matchedState.state);
+          filledFields.add("state");
+          const matchedDistrict = matchedState.districts.find((d) =>
+            data.location?.toLowerCase().includes(d.toLowerCase())
+          );
+          if (matchedDistrict) {
+            setValue("district", matchedDistrict);
+            filledFields.add("district");
+          }
+        }
+      }
       if (data.tenderValue) { setValue("tenderValue", data.tenderValue); filledFields.add("tenderValue"); }
       if (data.emd) { setValue("emd", data.emd); filledFields.add("emd"); }
       if (data.tenderFee) { setValue("tenderFee", data.tenderFee); filledFields.add("tenderFee"); }
@@ -481,8 +505,45 @@ export function AiExtractForm() {
                 {errors.title && <span className="text-xs text-destructive">{errors.title.message}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="location" className="flex items-center">Location <AiBadge field="location" /></Label>
-                <Input id="location" {...register("location")} placeholder="City, State" />
+                <Label className="flex items-center">State <AiBadge field="state" /></Label>
+                <Select
+                  value={selectedState}
+                  onValueChange={(val) => {
+                    setValue("state", val as any);
+                    setValue("district", "" as any);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select State" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATE_DISTRICT_DATA.states.map((s) => (
+                      <SelectItem key={s.state} value={s.state}>
+                        {s.state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label className="flex items-center">District <AiBadge field="district" /></Label>
+                <Select
+                  value={selectedDistrict}
+                  onValueChange={(val) => setValue("district", val as any)}
+                  disabled={!selectedState}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedState ? "Select District" : "Select State first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {districtOptions.map((dist) => (
+                      <SelectItem key={dist} value={dist}>
+                        {dist}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="responsiblePerson">Responsible Person</Label>

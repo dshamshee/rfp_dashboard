@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
+import { STATE_DISTRICT_DATA } from "@/lib/state-district";
 
 interface TenderEditDialogProps {
   tender: Tender | null;
@@ -72,6 +73,11 @@ export function TenderEditDialog({
     formState: { errors },
   } = form;
 
+  const selectedState = (watch("state") || "") as string;
+  const selectedDistrict = (watch("district") || "") as string;
+  const districtOptions =
+    STATE_DISTRICT_DATA.states.find((s) => s.state === selectedState)?.districts || [];
+
   // Initialize form when tender changes
   useEffect(() => {
     if (tender) {
@@ -80,7 +86,8 @@ export function TenderEditDialog({
         tenderId: tender.tenderId || "",
         client: tender.client || "",
         title: tender.title || "",
-        location: tender.location || "",
+        state: tender.state || "",
+        district: tender.district || "",
         tenderValue: tender.tenderValue ?? undefined,
         emd: tender.emd ?? undefined,
         tenderFee: tender.tenderFee ?? undefined,
@@ -230,8 +237,45 @@ export function TenderEditDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-location">Location</Label>
-                <Input id="edit-location" placeholder="Location" {...register("location")} />
+                <Label>State</Label>
+                <Select
+                  value={selectedState}
+                  onValueChange={(val) => {
+                    setValue("state", val as any);
+                    setValue("district", "" as any);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select State" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATE_DISTRICT_DATA.states.map((s) => (
+                      <SelectItem key={s.state} value={s.state}>
+                        {s.state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>District</Label>
+                <Select
+                  value={selectedDistrict}
+                  onValueChange={(val) => setValue("district", val as any)}
+                  disabled={!selectedState}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedState ? "Select District" : "Select State first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {districtOptions.map((dist) => (
+                      <SelectItem key={dist} value={dist}>
+                        {dist}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>

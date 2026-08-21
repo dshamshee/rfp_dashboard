@@ -3,6 +3,8 @@ import { faker } from '@faker-js/faker';
 import { db } from '../index';
 import { tenderTable } from '../schema';
 
+import { STATE_DISTRICT_DATA, StateDistrict } from '../../state-district';
+
 const clients = [
   "National Highways Authority of India (NHAI)",
   "Indian Railways (Northern Zone)",
@@ -29,18 +31,6 @@ const tenderTitles = [
   "Railway Signaling & Telecommunication System Modernization",
   "Supply of Laptops & Workstations for Educational Institutes",
   "Facility Management & Security Services for Data Centers",
-];
-
-const locations = [
-  "MAHARASHTRA",
-  "JHARKHAND",
-  "DELHI",
-  "KARNATAKA",
-  "GUJARAT",
-  "TELANGANA",
-  "TAMIL NADU",
-  "WEST BENGAL",
-  "UTTAR PRADESH",
 ];
 
 const responsiblePersons = [
@@ -71,11 +61,15 @@ async function seed() {
     const openDate = new Date(lastDate.getTime() + faker.number.int({ min: 1, max: 3 }) * 86400000);
     const expResult = new Date(openDate.getTime() + faker.number.int({ min: 15, max: 45 }) * 86400000);
 
+    const stateObj = faker.helpers.arrayElement(STATE_DISTRICT_DATA.states) as StateDistrict;
+    const districtName: string = faker.helpers.arrayElement(stateObj.districts);
+
     return {
       tenderId: `GEM/${now.getFullYear()}/B/${faker.number.int({ min: 1000000, max: 9999999 })}`,
       title: faker.helpers.arrayElement(tenderTitles),
       client: faker.helpers.arrayElement(clients),
-      location: faker.helpers.arrayElement(locations),
+      state: stateObj.state,
+      district: districtName,
       tenderValue: tenderVal,
       emd: emdVal,
       tenderFee: feeVal,

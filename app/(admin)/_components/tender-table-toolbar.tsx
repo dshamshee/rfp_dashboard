@@ -19,6 +19,8 @@ import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Tender } from "@/lib/db/schema";
 
+import { STATE_DISTRICT_DATA } from "@/lib/state-district";
+
 interface DatePickerFilterProps {
   value: string;
   onChange: (val: string) => void;
@@ -90,6 +92,13 @@ export function TenderTableToolbar<TData>({
   const [publishFrom, setPublishFrom] = useState<string>("");
   const [publishTo, setPublishTo] = useState<string>("");
 
+  const selectedState = (table.getColumn("state")?.getFilterValue() as string) || "";
+  const selectedDistrict = (table.getColumn("district")?.getFilterValue() as string) || "";
+
+  const availableDistricts = selectedState
+    ? STATE_DISTRICT_DATA.states.find((s) => s.state === selectedState)?.districts || []
+    : [];
+
   const isFiltered =
     table.getState().columnFilters.length > 0 ||
     !!table.getState().globalFilter ||
@@ -152,7 +161,8 @@ export function TenderTableToolbar<TData>({
       "Tender Ref ID",
       "Title",
       "Client",
-      "Location",
+      "State",
+      "District",
       "Tender Value (INR)",
       "EMD (INR)",
       "Tender Fee (INR)",
@@ -170,7 +180,8 @@ export function TenderTableToolbar<TData>({
       `"${item.tenderId || ""}"`,
       `"${item.title.replace(/"/g, '""')}"`,
       `"${item.client.replace(/"/g, '""')}"`,
-      `"${item.location || ""}"`,
+      `"${item.state || ""}"`,
+      `"${item.district || ""}"`,
       item.tenderValue ?? "",
       item.emd ?? "",
       item.tenderFee ?? "",
@@ -213,6 +224,55 @@ export function TenderTableToolbar<TData>({
                 className="pl-8"
               />
             </div>
+          </div>
+
+          {/* State Filter */}
+          <div className="flex flex-col gap-1.5 min-w-[150px]">
+            <Label className="text-xs font-semibold text-muted-foreground">State</Label>
+            <Select
+              value={selectedState || "ALL"}
+              onValueChange={(val) => {
+                table.getColumn("state")?.setFilterValue(val === "ALL" ? undefined : val);
+                // Clear district filter when state changes
+                table.getColumn("district")?.setFilterValue(undefined);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All States" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="ALL">All States</SelectItem>
+                {STATE_DISTRICT_DATA.states.map((s) => (
+                  <SelectItem key={s.state} value={s.state}>
+                    {s.state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* District Filter */}
+          <div className="flex flex-col gap-1.5 min-w-[150px]">
+            <Label className="text-xs font-semibold text-muted-foreground">District</Label>
+            <Select
+              value={selectedDistrict || "ALL"}
+              onValueChange={(val) =>
+                table.getColumn("district")?.setFilterValue(val === "ALL" ? undefined : val)
+              }
+              disabled={!selectedState}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={selectedState ? "All Districts" : "Select State First"} />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="ALL">All Districts</SelectItem>
+                {availableDistricts.map((dist) => (
+                  <SelectItem key={dist} value={dist}>
+                    {dist}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Priority Filter */}

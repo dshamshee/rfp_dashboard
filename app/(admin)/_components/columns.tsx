@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, Eye, FileText, MoreHorizontal, Pencil, Trash2, XCircle } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MoreHorizontal, Pencil, Trash2, XCircle } from "lucide-react";
 import { Tender } from "@/lib/db/schema";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -148,9 +148,22 @@ export const columns: ColumnDef<Tender>[] = [
     },
   },
   {
-    accessorKey: "location",
-    header: "Location",
-    cell: ({ row }) => row.getValue("location") || "-",
+    accessorKey: "state",
+    header: "State",
+    cell: ({ row }) => row.getValue("state") || "-",
+    filterFn: (row, id, value) => {
+      if (!value || value === "ALL") return true;
+      return row.getValue(id) === value;
+    },
+  },
+  {
+    accessorKey: "district",
+    header: "District",
+    cell: ({ row }) => row.getValue("district") || "-",
+    filterFn: (row, id, value) => {
+      if (!value || value === "ALL") return true;
+      return row.getValue(id) === value;
+    },
   },
   {
     accessorKey: "tenderValue",
@@ -352,9 +365,10 @@ export const columns: ColumnDef<Tender>[] = [
                 </DropdownMenuItem> */}
                 <DropdownMenuItem onClick={() => {
                   navigator.clipboard.writeText(tender.id);
-                  toast.success("Tender ID copied to clipboard");
+                  toast.success("ID copied to clipboard");
                 }}>
-                  Copy Tender ID
+                  <Copy className="mr-2 size-4 text-slate-600 dark:text-slate-400" />
+                  Copy ID
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />

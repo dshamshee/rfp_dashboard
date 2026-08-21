@@ -30,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { STATE_DISTRICT_DATA } from "@/lib/state-district";
+
 export function TenderForm() {
   const router = useRouter();
   const addTenderMutation = useAddTenderMutation();
@@ -46,7 +48,8 @@ export function TenderForm() {
       tenderId: "",
       client: "",
       title: "",
-      location: "",
+      state: "",
+      district: "",
       isBidSubmitted: false,
       priority: undefined,
       eligibility: undefined,
@@ -67,6 +70,11 @@ export function TenderForm() {
     reset,
     formState: { errors },
   } = form;
+
+  const selectedState = (watch("state") || "") as string;
+  const selectedDistrict = (watch("district") || "") as string;
+  const districtOptions =
+    STATE_DISTRICT_DATA.states.find((s) => s.state === selectedState)?.districts || [];
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -166,8 +174,45 @@ export function TenderForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" placeholder="e.g. Mumbai, MH" {...register("location")} />
+            <Label>State</Label>
+            <Select
+              value={selectedState}
+              onValueChange={(val) => {
+                setValue("state", val as any);
+                setValue("district", "" as any);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select State" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATE_DISTRICT_DATA.states.map((s) => (
+                  <SelectItem key={s.state} value={s.state}>
+                    {s.state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>District</Label>
+            <Select
+              value={selectedDistrict}
+              onValueChange={(val) => setValue("district", val as any)}
+              disabled={!selectedState}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={selectedState ? "Select District" : "Select State first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {districtOptions.map((dist) => (
+                  <SelectItem key={dist} value={dist}>
+                    {dist}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
