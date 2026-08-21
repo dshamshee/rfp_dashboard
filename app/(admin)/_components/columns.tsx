@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, Eye, FileText, MoreHorizontal, Trash2, XCircle } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Eye, FileText, MoreHorizontal, Pencil, Trash2, XCircle } from "lucide-react";
 import { Tender } from "@/lib/db/schema";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { TenderDetailsDialog } from "./tender-details-dialog";
+import { TenderEditDialog } from "./tender-edit-dialog";
 
 const formatCurrency = (val: number | null | undefined) => {
   if (val == null) return "-";
@@ -33,11 +35,9 @@ const formatCurrency = (val: number | null | undefined) => {
 
 const formatDate = (dateVal: Date | string | null | undefined) => {
   if (!dateVal) return "-";
-  return new Date(dateVal).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "-";
+  return format(d, "dd/MM/yyyy");
 };
 
 const dateRangeFilterFn: FilterFn<Tender> = (row, columnId, filterValue) => {
@@ -269,6 +269,7 @@ export const columns: ColumnDef<Tender>[] = [
       const isSuperAdmin = session?.user?.role?.toUpperCase() === "SUPERADMIN";
       const tender = row.original;
       const [showDetails, setShowDetails] = useState(false);
+      const [showEdit, setShowEdit] = useState(false);
       const queryClient = useQueryClient();
 
       const handleToggle = async () => {
@@ -315,7 +316,7 @@ export const columns: ColumnDef<Tender>[] = [
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="size-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56 p-2">
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 {/* Only SUPERADMIN can see the View menu item */}
@@ -325,6 +326,10 @@ export const columns: ColumnDef<Tender>[] = [
                     View
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onClick={() => setShowEdit(true)}>
+                  <Pencil className="mr-2 size-4 text-blue-600 dark:text-blue-400" />
+                  Edit Tender
+                </DropdownMenuItem>
                 {tender.documentUrl && (
                   <DropdownMenuItem onClick={() => window.open(tender.documentUrl || "", "_blank")}>
                     <FileText className="mr-2 size-4 text-red-600" />
@@ -344,13 +349,16 @@ export const columns: ColumnDef<Tender>[] = [
                     </>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(tender.id)}>
+                <DropdownMenuItem onClick={() => {
+                  navigator.clipboard.writeText(tender.id);
+                  toast.success("Tender ID copied to clipboard");
+                }}>
                   Copy Tender ID
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10">
                   <Trash2 className="mr-2 size-4" />
                   Delete
                 </DropdownMenuItem>
@@ -365,6 +373,12 @@ export const columns: ColumnDef<Tender>[] = [
               onOpenChange={setShowDetails}
             />
           )}
+
+          <TenderEditDialog
+            tender={tender}
+            open={showEdit}
+            onOpenChange={setShowEdit}
+          />
         </div>
       );
     },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Table } from "@tanstack/react-table";
-import { Calendar, Download, Printer, RotateCcw, Search } from "lucide-react";
+import { Calendar as CalendarIconHeader, Download, Printer, RotateCcw, Search, CalendarIcon, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Tender } from "@/lib/db/schema";
+
+interface DatePickerFilterProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}
+
+function DatePickerFilter({ value, onChange, placeholder = "DD/MM/YYYY" }: DatePickerFilterProps) {
+  const [open, setOpen] = useState(false);
+  const selectedDate = value ? parseISO(value) : undefined;
+
+  return (
+    <div className="relative flex items-center">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          className={cn(
+            "h-8 text-xs font-normal justify-between w-[165px] px-2.5 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground font-mono inline-flex items-center gap-1 shadow-2xs cursor-pointer transition-colors",
+            !selectedDate && "text-muted-foreground"
+          )}
+        >
+          <span>
+            {selectedDate && !isNaN(selectedDate.getTime())
+              ? format(selectedDate, "dd/MM/yyyy")
+              : placeholder}
+          </span>
+          <CalendarIcon className="ml-1 size-3.5 opacity-60 shrink-0" />
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              if (date) {
+                onChange(format(date, "yyyy-MM-dd"));
+              } else {
+                onChange("");
+              }
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="absolute right-7 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted"
+          title="Clear date"
+        >
+          <X className="size-3" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 interface TenderTableToolbarProps<TData> {
   table: Table<TData>;
@@ -118,9 +177,9 @@ export function TenderTableToolbar<TData>({
       `"${item.priority || ""}"`,
       `"${item.eligibility || ""}"`,
       item.isBidSubmitted ? "Yes" : "No",
-      item.publishDate ? new Date(item.publishDate).toISOString().split("T")[0] : "",
-      item.lastDate ? new Date(item.lastDate).toISOString().split("T")[0] : "",
-      item.openingDate ? new Date(item.openingDate).toISOString().split("T")[0] : "",
+      item.publishDate ? format(new Date(item.publishDate), "dd/MM/yyyy") : "",
+      item.lastDate ? format(new Date(item.lastDate), "dd/MM/yyyy") : "",
+      item.openingDate ? format(new Date(item.openingDate), "dd/MM/yyyy") : "",
       `"${item.responsiblePerson || ""}"`,
     ]);
 
@@ -240,30 +299,26 @@ export function TenderTableToolbar<TData>({
       </div>
 
       {/* Date Wise Filters Section */}
-      <div className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-3 shadow-xs">
+      <div className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-3.5 shadow-xs">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground pr-2 border-r">
-          <Calendar className="size-4 text-primary" />
+          <CalendarIconHeader className="size-4 text-primary" />
           <span>Date Filters</span>
         </div>
 
         {/* Opening Date Range Filter */}
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-muted-foreground">Opening Date</span>
-          <div className="flex items-center gap-1">
-            <Input
-              type="date"
-              aria-label="Opening Date From"
+          <div className="flex items-center gap-1.5">
+            <DatePickerFilter
               value={openingFrom}
-              onChange={(e) => setOpeningFrom(e.target.value)}
-              className="h-8 text-xs w-[135px]"
+              onChange={setOpeningFrom}
+              placeholder="DD/MM/YYYY"
             />
-            <span className="text-xs text-muted-foreground">-</span>
-            <Input
-              type="date"
-              aria-label="Opening Date To"
+            <span className="text-xs text-muted-foreground font-semibold">-</span>
+            <DatePickerFilter
               value={openingTo}
-              onChange={(e) => setOpeningTo(e.target.value)}
-              className="h-8 text-xs w-[135px]"
+              onChange={setOpeningTo}
+              placeholder="DD/MM/YYYY"
             />
           </div>
         </div>
@@ -271,21 +326,17 @@ export function TenderTableToolbar<TData>({
         {/* Last Date Range Filter */}
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-muted-foreground">Last Date</span>
-          <div className="flex items-center gap-1">
-            <Input
-              type="date"
-              aria-label="Last Date From"
+          <div className="flex items-center gap-1.5">
+            <DatePickerFilter
               value={lastFrom}
-              onChange={(e) => setLastFrom(e.target.value)}
-              className="h-8 text-xs w-[135px]"
+              onChange={setLastFrom}
+              placeholder="DD/MM/YYYY"
             />
-            <span className="text-xs text-muted-foreground">-</span>
-            <Input
-              type="date"
-              aria-label="Last Date To"
+            <span className="text-xs text-muted-foreground font-semibold">-</span>
+            <DatePickerFilter
               value={lastTo}
-              onChange={(e) => setLastTo(e.target.value)}
-              className="h-8 text-xs w-[135px]"
+              onChange={setLastTo}
+              placeholder="DD/MM/YYYY"
             />
           </div>
         </div>
@@ -293,21 +344,17 @@ export function TenderTableToolbar<TData>({
         {/* Publish Date Range Filter */}
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-muted-foreground">Publish Date</span>
-          <div className="flex items-center gap-1">
-            <Input
-              type="date"
-              aria-label="Publish Date From"
+          <div className="flex items-center gap-1.5">
+            <DatePickerFilter
               value={publishFrom}
-              onChange={(e) => setPublishFrom(e.target.value)}
-              className="h-8 text-xs w-[135px]"
+              onChange={setPublishFrom}
+              placeholder="DD/MM/YYYY"
             />
-            <span className="text-xs text-muted-foreground">-</span>
-            <Input
-              type="date"
-              aria-label="Publish Date To"
+            <span className="text-xs text-muted-foreground font-semibold">-</span>
+            <DatePickerFilter
               value={publishTo}
-              onChange={(e) => setPublishTo(e.target.value)}
-              className="h-8 text-xs w-[135px]"
+              onChange={setPublishTo}
+              placeholder="DD/MM/YYYY"
             />
           </div>
         </div>
@@ -328,3 +375,4 @@ export function TenderTableToolbar<TData>({
     </div>
   );
 }
+

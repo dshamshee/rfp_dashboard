@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { tenderTable } from "@/lib/db/schema";
+import { sql } from "drizzle-orm";
 import { tenderFormSchema, TenderFormData } from "./zod-type/tender-type";
 
 export async function createTenderAction(data: TenderFormData) {
@@ -41,6 +42,8 @@ export async function createTenderAction(data: TenderFormData) {
       nextActionDate: validatedData.nextActionDate || null,
       remarks: validatedData.remarks || null,
       documentUrl: validatedData.documentUrl || null,
+      createdAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
+      updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
     }).returning();
 
     revalidatePath("/");

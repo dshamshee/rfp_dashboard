@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { tenderTable } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export async function getTendersAction() {
   try {
@@ -22,7 +22,7 @@ export async function toggleBidSubmittedAction(id: string, isBidSubmitted: boole
   try {
     await db
       .update(tenderTable)
-      .set({ isBidSubmitted, updatedAt: new Date() })
+      .set({ isBidSubmitted, updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'` })
       .where(eq(tenderTable.id, id));
 
     revalidatePath("/");
@@ -43,3 +43,53 @@ export async function deleteTenderAction(id: string) {
     return { success: false, error: error?.message || "Failed to delete tender" };
   }
 }
+
+export async function updateTenderAction(id: string, data: any) {
+  try {
+    const [updated] = await db
+      .update(tenderTable)
+      .set({
+        tenderId: data.tenderId || null,
+        client: data.client,
+        title: data.title,
+        location: data.location || null,
+        tenderValue: data.tenderValue ?? null,
+        emd: data.emd ?? null,
+        tenderFee: data.tenderFee ?? null,
+        publishDate: new Date(data.publishDate),
+        preBidDate: new Date(data.preBidDate),
+        lastDate: new Date(data.lastDate),
+        openingDate: new Date(data.openingDate),
+        stage: data.stage || null,
+        priority: data.priority || null,
+        eligibility: data.eligibility || null,
+        technicalStatus: data.technicalStatus || null,
+        commercialStatus: data.commercialStatus || null,
+        emdStatus: data.emdStatus || null,
+        isBidSubmitted: !!data.isBidSubmitted,
+        submissionDate: new Date(data.submissionDate),
+        expectedResultDate: new Date(data.expectedResultDate),
+        awardStatus: data.awardStatus || null,
+        competitor: data.competitor || null,
+        ourQuotation: data.ourQuotation ?? null,
+        expectedMargin: data.expectedMargin ?? null,
+        expectedMarginRupees: data.expectedMarginRupees ?? null,
+        responsiblePerson: data.responsiblePerson || null,
+        partner: data.partner || null,
+        nextAction: data.nextAction || null,
+        nextActionDate: data.nextActionDate ? new Date(data.nextActionDate) : null,
+        remarks: data.remarks || null,
+        documentUrl: data.documentUrl || null,
+        updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
+      })
+      .where(eq(tenderTable.id, id))
+      .returning();
+
+    revalidatePath("/");
+    return { success: true, data: updated };
+  } catch (error: any) {
+    console.error("Failed to update tender:", error);
+    return { success: false, error: error?.message || "Failed to update tender" };
+  }
+}
+

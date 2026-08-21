@@ -102,6 +102,8 @@ async function seed() {
       nextAction: faker.helpers.arrayElement(["Submit EMD BG", "Prepare Technical Deck", "Attend Pre-bid Meeting", "Submit Clarification Response"]),
       nextActionDate: new Date(now.getTime() + faker.number.int({ min: 2, max: 14 }) * 86400000),
       remarks: faker.lorem.sentence(),
+      createdAt: pubDate,
+      updatedAt: now,
     };
   });
 
