@@ -101,11 +101,11 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("PDF upload error:", error);
+    console.error("SERVER ERROR [PDF upload]:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error?.message || "Failed to compress and upload PDF document.",
+        error: "Failed to upload document. Please try again.",
       },
       { status: 500 }
     );

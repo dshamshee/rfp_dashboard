@@ -59,6 +59,7 @@ export function TenderForm() {
       emdStatus: "Pending",
       awardStatus: "In Progress",
       documentUrl: "",
+      insertedBy: "MANUAL",
     },
   });
 
@@ -119,10 +120,11 @@ export function TenderForm() {
           `PDF uploaded & compressed successfully (${result.originalSizeKb} KB → ${result.compressedSizeKb} KB)!`
         );
       } else {
-        toast.error(result.error || "Failed to upload PDF document.");
+        toast.error(result.error || "Failed to upload PDF document. Please try again.");
       }
     } catch (err: any) {
-      toast.error(err?.message || "Error uploading PDF document.");
+      console.error("PDF upload client error:", err);
+      toast.error("Failed to upload PDF document. Please try again.");
     } finally {
       setIsUploadingPdf(false);
     }
@@ -137,7 +139,8 @@ export function TenderForm() {
         router.push("/");
       },
       onError: (err: any) => {
-        toast.error(err.message || "Failed to create tender");
+        console.error("Create tender client error:", err);
+        toast.error("Failed to create tender. Please check your inputs and try again.");
       },
     });
   };

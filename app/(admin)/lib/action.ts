@@ -13,8 +13,8 @@ export async function getTendersAction() {
       .orderBy(desc(tenderTable.createdAt), desc(tenderTable.id));
     return { success: true, data: tenders };
   } catch (error: any) {
-    console.error("Failed to fetch tenders:", error);
-    return { success: false, error: error?.message || "Failed to fetch tenders", data: [] };
+    console.error("SERVER ERROR [getTendersAction]:", error);
+    return { success: false, error: "Failed to load tenders. Please refresh the page.", data: [] };
   }
 }
 
@@ -28,8 +28,8 @@ export async function toggleBidSubmittedAction(id: string, isBidSubmitted: boole
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
-    console.error("Failed to toggle bid status:", error);
-    return { success: false, error: error?.message || "Failed to update bid status" };
+    console.error("SERVER ERROR [toggleBidSubmittedAction]:", error);
+    return { success: false, error: "Failed to update status. Please try again." };
   }
 }
 
@@ -39,8 +39,8 @@ export async function deleteTenderAction(id: string) {
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
-    console.error("Failed to delete tender:", error);
-    return { success: false, error: error?.message || "Failed to delete tender" };
+    console.error("SERVER ERROR [deleteTenderAction]:", error);
+    return { success: false, error: "Failed to delete tender. Please try again." };
   }
 }
 
@@ -89,8 +89,8 @@ export async function updateTenderAction(id: string, data: any) {
     revalidatePath("/");
     return { success: true, data: updated };
   } catch (error: any) {
-    console.error("Failed to update tender:", error);
-    return { success: false, error: error?.message || "Failed to update tender" };
+    console.error("SERVER ERROR [updateTenderAction]:", error);
+    return { success: false, error: "Failed to update tender details. Please try again." };
   }
 }
 

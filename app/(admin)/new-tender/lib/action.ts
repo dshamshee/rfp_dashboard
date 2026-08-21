@@ -43,6 +43,7 @@ export async function createTenderAction(data: TenderFormData) {
       nextActionDate: validatedData.nextActionDate || null,
       remarks: validatedData.remarks || null,
       documentUrl: validatedData.documentUrl || null,
+      insertedBy: validatedData.insertedBy || "MANUAL",
       createdAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
       updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
     }).returning();
@@ -52,10 +53,10 @@ export async function createTenderAction(data: TenderFormData) {
 
     return { success: true, data: inserted };
   } catch (error: any) {
-    console.error("Failed to create tender:", error);
+    console.error("SERVER ERROR [createTenderAction]:", error);
     return {
       success: false,
-      error: error?.message || "Failed to create tender. Please try again.",
+      error: "Failed to create tender. Please check your inputs and try again.",
     };
   }
 }

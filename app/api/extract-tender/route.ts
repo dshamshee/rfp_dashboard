@@ -59,11 +59,11 @@ export async function POST(req: Request) {
         );
       }
     } catch (pdfErr: any) {
-      console.error("PDF text extraction failed:", pdfErr);
+      console.error("SERVER ERROR [pdfParse]:", pdfErr);
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to parse PDF document. The file may be corrupted or password-protected.",
+          error: "Unable to read PDF file. Please ensure the document is clear and unencrypted.",
         },
         { status: 422 }
       );
@@ -74,11 +74,11 @@ export async function POST(req: Request) {
     try {
       extractedData = await extractTenderFromText(rawText);
     } catch (aiErr: any) {
-      console.error("Gemini AI extraction failed:", aiErr);
+      console.error("SERVER ERROR [Gemini AI extraction]:", aiErr);
       return NextResponse.json(
         {
           success: false,
-          error: aiErr?.message || "AI extraction failed. Please check your GOOGLE_GEMINI_API_KEY.",
+          error: "AI extraction encountered an issue. Please try again or fill in the details manually.",
         },
         { status: 500 }
       );
@@ -139,11 +139,11 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Extract tender API error:", error);
+    console.error("SERVER ERROR [Extract tender API]:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error?.message || "An unexpected error occurred during PDF extraction.",
+        error: "An unexpected error occurred while processing the document. Please try again.",
       },
       { status: 500 }
     );

@@ -86,6 +86,7 @@ export function AiExtractForm() {
       emdStatus: "Pending",
       awardStatus: "In Progress",
       documentUrl: "",
+      insertedBy: "AI",
     },
   });
 
@@ -169,6 +170,8 @@ export function AiExtractForm() {
 
       // Track which fields were filled by AI
       const filledFields = new Set<string>();
+
+      setValue("insertedBy", "AI");
 
       // Pre-fill form with extracted data
       if (data.tenderId) { setValue("tenderId", data.tenderId); filledFields.add("tenderId"); }

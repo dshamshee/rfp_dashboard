@@ -36,6 +36,7 @@ export const tenderTable = pgTable("tender", {
   nextActionDate: timestamp("next_action_date", { mode: "date" }),
   remarks: text("remarks"),
   documentUrl: text("document_url"),
+  insertedBy: text("inserted_by").notNull().default("MANUAL"),
   createdAt: timestamp("created_at", { mode: "date" }).default(sql`NOW() AT TIME ZONE 'Asia/Kolkata'`).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`NOW() AT TIME ZONE 'Asia/Kolkata'`).notNull(),
 }, (table) => [
@@ -47,6 +48,10 @@ export const tenderTable = pgTable("tender", {
     "eligibility_type_check",
     sql`eligibility in ('ELIGIBLE','NOT ELIGIBLE')`,
   ),
+  check(
+    "inserted_by_check",
+    sql`inserted_by in ('MANUAL','AI')`,
+  )
 ]);
 
 export type Tender = typeof tenderTable.$inferSelect;

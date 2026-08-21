@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MoreHorizontal, Pencil, Trash2, XCircle } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MoreHorizontal, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
 import { Tender } from "@/lib/db/schema";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,21 +109,33 @@ export const columns: ColumnDef<Tender>[] = [
       const tender = row.original;
 
       return (
-        <div className="max-w-[220px]">
-          {isSuperAdmin ? (
-            <button
-              type="button"
-              onClick={() => setShowDetails(true)}
-              className="font-medium text-foreground hover:text-primary hover:underline text-left truncate block w-full cursor-pointer"
-              title="Click to view full details"
-            >
-              {row.getValue("title")}
-            </button>
-          ) : (
-            <span className="font-medium text-foreground text-left truncate block w-full">
-              {row.getValue("title")}
-            </span>
-          )}
+        <div className={cn("max-w-[240px] pl-2 border-l-2 py-0.5 transition-colors", tender.insertedBy === "AI" ? "border-purple-500/80 dark:border-purple-400" : "border-transparent")}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            {isSuperAdmin ? (
+              <button
+                type="button"
+                onClick={() => setShowDetails(true)}
+                className="font-medium text-foreground hover:text-primary hover:underline text-left truncate flex-1 cursor-pointer"
+                title="Click to view full details"
+              >
+                {row.getValue("title")}
+              </button>
+            ) : (
+              <span className="font-medium text-foreground text-left truncate flex-1">
+                {row.getValue("title")}
+              </span>
+            )}
+            {tender.insertedBy === "AI" && (
+              <Badge
+                variant="outline"
+                className="text-[10px] h-4 py-0 px-1 font-semibold border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/60 dark:text-purple-300 inline-flex items-center gap-0.5 shrink-0"
+                title="Inserted via AI PDF Extractor"
+              >
+                <Sparkles className="size-2.5 text-purple-600 dark:text-purple-400" />
+                AI
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground truncate">{tender.client}</p>
           {tender.documentUrl && (
             <a
@@ -232,7 +245,7 @@ export const columns: ColumnDef<Tender>[] = [
           toast.success(newVal ? "Marked as Submitted" : "Marked as Not Submitted");
           queryClient.invalidateQueries({ queryKey: ["tenders"] });
         } else {
-          toast.error(res.error || "Failed to update status");
+          toast.error(res.error || "Failed to update status. Please try again.");
         }
       };
 
@@ -303,7 +316,7 @@ export const columns: ColumnDef<Tender>[] = [
             toast.success("Tender deleted successfully");
             queryClient.invalidateQueries({ queryKey: ["tenders"] });
           } else {
-            toast.error(res.error || "Failed to delete tender");
+            toast.error(res.error || "Failed to delete tender. Please try again.");
           }
         }
       };

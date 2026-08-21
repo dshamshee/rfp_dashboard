@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { TenderTableToolbar } from "./tender-table-toolbar";
 import { Tender } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -103,6 +104,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={cn((row.original as Tender)?.insertedBy === "AI" && "bg-purple-50/40 dark:bg-purple-950/20 hover:bg-purple-100/50 dark:hover:bg-purple-900/30")}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

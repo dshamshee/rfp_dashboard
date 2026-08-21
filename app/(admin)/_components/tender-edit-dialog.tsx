@@ -165,10 +165,11 @@ export function TenderEditDialog({
           `PDF updated & compressed successfully (${result.originalSizeKb} KB → ${result.compressedSizeKb} KB)!`
         );
       } else {
-        toast.error(result.error || "Failed to upload PDF document.");
+        toast.error(result.error || "Failed to upload PDF document. Please try again.");
       }
     } catch (err: any) {
-      toast.error(err?.message || "Error uploading PDF document.");
+      console.error("PDF upload client error:", err);
+      toast.error("Failed to upload PDF document. Please try again.");
     } finally {
       setIsUploadingPdf(false);
     }
@@ -183,10 +184,11 @@ export function TenderEditDialog({
         queryClient.invalidateQueries({ queryKey: ["tenders"] });
         onOpenChange(false);
       } else {
-        toast.error(res.error || "Failed to update tender");
+        toast.error(res.error || "Failed to update tender details. Please try again.");
       }
     } catch (err: any) {
-      toast.error(err?.message || "An unexpected error occurred");
+      console.error("Update tender client error:", err);
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsSaving(false);
     }
