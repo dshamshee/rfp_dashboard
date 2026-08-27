@@ -7,6 +7,8 @@ import { columns } from "./_components/columns";
 import { useGetTendersQuery } from "./query/get-tenders";
 import { useGetDiscussionCountQuery, useGetTenderIdsWithDiscussionsQuery } from "./query/get-discussions";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Eye,
   EyeOff,
@@ -20,7 +22,7 @@ export default function DashboardPage() {
   const [showTable, setShowTable] = useState(false);
   const [tableFilterMode, setTableFilterMode] = useState<"ALL" | "DUE_WEEK" | "PREBID_WEEK" | "HAS_DISCUSSIONS">("ALL");
   const { data: tenders = [], isLoading, error } = useGetTendersQuery();
-  const { data: discussionCount = 0 } = useGetDiscussionCountQuery();
+  const { data: discussionCount = 0, isLoading: isDiscussionLoading } = useGetDiscussionCountQuery();
   const { data: tenderIdsWithDiscussions = [] as string[] } = useGetTenderIdsWithDiscussionsQuery();
 
   const today = new Date();
@@ -78,7 +80,9 @@ export default function DashboardPage() {
     <ContentLayout title="Dashboard">
       <div className="space-y-4">
         {/* Pre-Bid Alert */}
-        {preBidWithinWeekCount > 0 && (
+        {isLoading ? (
+          <Skeleton className="h-14 w-full rounded-lg" />
+        ) : preBidWithinWeekCount > 0 ? (
           <button
             type="button"
             onClick={() => handleToggleTable("PREBID_WEEK")}
@@ -104,7 +108,7 @@ export default function DashboardPage() {
               {isActive("PREBID_WEEK") ? "Viewing ↓" : "View Tenders →"}
             </span>
           </button>
-        )}
+        ) : null}
 
         {/* Stats Grid */}
         <div className="relative grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-3 lg:grid-cols-6 print:hidden">
@@ -118,7 +122,11 @@ export default function DashboardPage() {
             className={`group flex flex-col gap-1 bg-card px-4 pt-4 pb-3.5 text-left transition-colors hover:bg-accent/50 ${isActive("ALL") ? "bg-accent/60" : ""}`}
           >
             <span className="text-[11px] font-medium text-muted-foreground">Total Tenders</span>
-            <span className="text-2xl font-bold tabular-nums tracking-tight">{totalTenders}</span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl font-bold tabular-nums tracking-tight">{totalTenders}</span>
+            )}
             <span className="text-[10px] text-muted-foreground/70">
               {isActive("ALL") ? "Viewing all ↓" : "Click to view"}
             </span>
@@ -134,9 +142,13 @@ export default function DashboardPage() {
               <Clock className="size-3 text-muted-foreground" />
               Closing Soon (7 Days)
             </span>
-            <span className="text-2xl font-bold tabular-nums tracking-tight">
-              {dueWithinWeekCount}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl font-bold tabular-nums tracking-tight">
+                {dueWithinWeekCount}
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground/70">
               Last date for submission
             </span>
@@ -145,10 +157,14 @@ export default function DashboardPage() {
           {/* Bids Submitted */}
           <div className="flex flex-col gap-1 bg-card px-4 pt-4 pb-3.5">
             <span className="text-[11px] font-medium text-muted-foreground">Bids Submitted</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold tabular-nums tracking-tight">{submittedBids}</span>
-              <span className="text-xs font-semibold text-muted-foreground">{submissionRate}%</span>
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20 my-0.5" />
+            ) : (
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tabular-nums tracking-tight">{submittedBids}</span>
+                <span className="text-xs font-semibold text-muted-foreground">{submissionRate}%</span>
+              </div>
+            )}
             <div className="h-1 w-full rounded-full bg-secondary">
               <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${submissionRate}%` }} />
             </div>
@@ -157,11 +173,15 @@ export default function DashboardPage() {
           {/* High Priority */}
           <div className="flex flex-col gap-1 bg-card px-4 pt-4 pb-3.5">
             <span className="text-[11px] font-medium text-muted-foreground">High Priority</span>
-            <span className="text-2xl font-bold tabular-nums tracking-tight">
-              {highPriorityCount}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl font-bold tabular-nums tracking-tight">
+                {highPriorityCount}
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground/70">
-              {highPriorityCount > 0 ? "Needs attention" : "All clear"}
+              {isLoading ? "Checking..." : highPriorityCount > 0 ? "Needs attention" : "All clear"}
             </span>
           </div>
 
@@ -175,9 +195,13 @@ export default function DashboardPage() {
               <MessageSquare className="size-3 text-muted-foreground" />
               Discussions
             </span>
-            <span className="text-2xl font-bold tabular-nums tracking-tight">
-              {discussionCount}
-            </span>
+            {isDiscussionLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl font-bold tabular-nums tracking-tight">
+                {discussionCount}
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground/70">
               {isActive("HAS_DISCUSSIONS") ? "Viewing ↓" : "Tenders discussed"}
             </span>
@@ -186,7 +210,11 @@ export default function DashboardPage() {
           {/* Portfolio Value (6th / Last) */}
           <div className="flex flex-col gap-1 bg-card px-4 pt-4 pb-3.5">
             <span className="text-[11px] font-medium text-muted-foreground">Portfolio Value</span>
-            <span className="text-lg font-bold tabular-nums tracking-tight truncate">{formatCurrency(totalValue)}</span>
+            {isLoading ? (
+              <Skeleton className="h-7 w-28 my-0.5" />
+            ) : (
+              <span className="text-lg font-bold tabular-nums tracking-tight truncate">{formatCurrency(totalValue)}</span>
+            )}
             <span className="text-[10px] text-muted-foreground/70">Total tender value</span>
           </div>
         </div>
@@ -220,8 +248,9 @@ export default function DashboardPage() {
             )}
 
             {isLoading ? (
-              <div className="flex h-48 items-center justify-center rounded-md border bg-card">
-                <p className="text-sm text-muted-foreground">Loading tenders data...</p>
+              <div className="flex h-52 flex-col items-center justify-center gap-3 rounded-md border bg-card">
+                <Spinner className="size-6 text-primary" />
+                <p className="text-sm font-medium text-muted-foreground">Loading tenders data...</p>
               </div>
             ) : error ? (
               <div className="flex h-48 items-center justify-center rounded-md border border-destructive bg-destructive/10 p-4 text-center">
@@ -238,3 +267,4 @@ export default function DashboardPage() {
     </ContentLayout>
   );
 }
+
