@@ -1,14 +1,26 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { PDFDocument } from "pdf-lib";
+import { createHash } from "crypto";
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import { extractTenderFromText } from "@/lib/ai/gemini";
+import { db } from "@/lib/db";
+import { tenderTable } from "@/lib/db/schema";
+import { ilike, or } from "drizzle-orm";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+/**
+ * Compute a short SHA-256 hash (first 16 hex chars) from the raw PDF bytes.
+ * This gives us content-based duplicate detection regardless of filename.
+ */
+function computeFileHash(buffer: Buffer): string {
+  return createHash("sha256").update(buffer).digest("hex").slice(0, 16);
+}
 
 export async function POST(req: Request) {
   try {
@@ -40,8 +52,41 @@ export async function POST(req: Request) {
       );
     }
 
+    const rawFileName = file.name;
+    const baseFileName = rawFileName.replace(/\.pdf$/i, "");
+    const sanitizedName = baseFileName.replace(/[^a-zA-Z0-9_.-]/g, "_");
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    // Compute content hash from the raw PDF bytes for duplicate detection (before expensive AI work)
+    const contentHash = computeFileHash(buffer);
+
+    // Check if a PDF with the same content hash OR same filename already exists in the database
+    const existingDoc = await db
+      .select({ id: tenderTable.id, title: tenderTable.title })
+      .from(tenderTable)
+      .where(
+        or(
+          // Content-based: check if hash appears in any existing document URL
+          ilike(tenderTable.documentUrl, `%_${contentHash}%`),
+          // Filename-based: fallback check by name patterns
+          ilike(tenderTable.documentUrl, `%/${sanitizedName}.pdf`),
+          ilike(tenderTable.documentUrl, `%/${baseFileName}.pdf`),
+          ilike(tenderTable.documentUrl, `%/${rawFileName}`)
+        )
+      )
+      .limit(1);
+
+    if (existingDoc.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `This PDF has already been uploaded for tender "${existingDoc[0].title || existingDoc[0].id}". Duplicate PDF documents are not allowed — even with a different filename.`,
+        },
+        { status: 409 }
+      );
+    }
 
     // --- Step 1: Extract raw text from PDF ---
     let rawText: string;
@@ -105,13 +150,16 @@ export async function POST(req: Request) {
         finalBuffer = buffer;
       }
 
+      // Use content hash in the public_id to ensure same content → same ID
+      const publicId = `tender_doc_${sanitizedName}_${contentHash}`;
+
       const uploadResult = await new Promise<any>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             folder: "rfp_tenders_pdf",
             resource_type: "raw",
-            public_id: `tender_doc_${Date.now()}`,
-            format: "pdf",
+            public_id: `${publicId}.pdf`,
+            overwrite: false,
           },
           (error, result) => {
             if (error) reject(error);
@@ -123,7 +171,21 @@ export async function POST(req: Request) {
 
       documentUrl = uploadResult.secure_url;
     } catch (uploadErr: any) {
-      // Non-fatal: we still have the extracted data even if upload fails
+      // Check if it's a duplicate in Cloudinary storage
+      if (
+        uploadErr?.http_code === 409 ||
+        uploadErr?.message?.includes("already exists") ||
+        uploadErr?.message?.includes("Resource already exists")
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `This PDF document already exists in storage. Duplicate PDF files are restricted — even with a different filename.`,
+          },
+          { status: 409 }
+        );
+      }
+      // Non-fatal for other errors: we still have the extracted data even if upload fails
       console.warn("Cloudinary upload failed (non-fatal):", uploadErr?.message);
     }
 
@@ -149,3 +211,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

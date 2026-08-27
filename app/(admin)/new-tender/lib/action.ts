@@ -11,7 +11,7 @@ export async function createTenderAction(data: TenderFormData) {
     const validatedData = tenderFormSchema.parse(data);
 
     const [inserted] = await db.insert(tenderTable).values({
-      tenderId: validatedData.tenderId || null,
+      tenderId: validatedData.tenderId,
       client: validatedData.client,
       title: validatedData.title,
       state: validatedData.state || null,
@@ -53,6 +53,18 @@ export async function createTenderAction(data: TenderFormData) {
 
     return { success: true, data: inserted };
   } catch (error: any) {
+    const isDuplicate =
+      error?.code === "23505" ||
+      error?.cause?.code === "23505" ||
+      (error?.message && error.message.includes("duplicate key"));
+
+    if (isDuplicate) {
+      return {
+        success: false,
+        error: `A tender with Reference ID "${data.tenderId}" already exists. Please enter a unique Tender Reference ID.`,
+      };
+    }
+
     console.error("SERVER ERROR [createTenderAction]:", error);
     return {
       success: false,

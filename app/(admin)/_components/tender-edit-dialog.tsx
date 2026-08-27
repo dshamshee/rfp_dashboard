@@ -165,10 +165,12 @@ export function TenderEditDialog({
           `PDF updated & compressed successfully (${result.originalSizeKb} KB → ${result.compressedSizeKb} KB)!`
         );
       } else {
+        e.target.value = "";
         toast.error(result.error || "Failed to upload PDF document. Please try again.");
       }
     } catch (err: any) {
       console.error("PDF upload client error:", err);
+      e.target.value = "";
       toast.error("Failed to upload PDF document. Please try again.");
     } finally {
       setIsUploadingPdf(false);

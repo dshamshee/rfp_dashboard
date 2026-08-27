@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const tenderFormSchema = z.object({
-  tenderId: z.string().optional(),
+  tenderId: z.string().min(1, { message: "Tender Reference ID is required" }),
   client: z.string().min(1, { message: "Client name is required" }),
   title: z.string().min(1, { message: "Tender title is required" }),
   state: z.string().optional(),

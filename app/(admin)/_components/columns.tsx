@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MoreHorizontal, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MessageSquare, MessageSquarePlus, MoreHorizontal, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
 import { Tender } from "@/lib/db/schema";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { TenderDetailsDialog } from "./tender-details-dialog";
 import { TenderEditDialog } from "./tender-edit-dialog";
+import { AddDiscussionDialog } from "./add-discussion-dialog";
+import { ViewDiscussionsDialog } from "./view-discussions-dialog";
 
 const formatCurrency = (val: number | null | undefined) => {
   if (val == null) return "-";
@@ -296,6 +298,8 @@ export const columns: ColumnDef<Tender>[] = [
       const tender = row.original;
       const [showDetails, setShowDetails] = useState(false);
       const [showEdit, setShowEdit] = useState(false);
+      const [showAddDiscussion, setShowAddDiscussion] = useState(false);
+      const [showViewDiscussions, setShowViewDiscussions] = useState(false);
       const queryClient = useQueryClient();
 
       const handleToggle = async () => {
@@ -386,6 +390,18 @@ export const columns: ColumnDef<Tender>[] = [
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
+                <DropdownMenuLabel>Discussion</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setShowAddDiscussion(true)}>
+                  <MessageSquarePlus className="mr-2 size-4 text-violet-600 dark:text-violet-400" />
+                  Add Discussion
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowViewDiscussions(true)}>
+                  <MessageSquare className="mr-2 size-4 text-violet-600 dark:text-violet-400" />
+                  View Discussions
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
                 <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10">
                   <Trash2 className="mr-2 size-4" />
                   Delete
@@ -406,6 +422,20 @@ export const columns: ColumnDef<Tender>[] = [
             tender={tender}
             open={showEdit}
             onOpenChange={setShowEdit}
+          />
+
+          <AddDiscussionDialog
+            tenderId={tender.id}
+            tenderTitle={tender.title}
+            open={showAddDiscussion}
+            onOpenChange={setShowAddDiscussion}
+          />
+
+          <ViewDiscussionsDialog
+            tenderId={tender.id}
+            tenderTitle={tender.title}
+            open={showViewDiscussions}
+            onOpenChange={setShowViewDiscussions}
           />
         </div>
       );

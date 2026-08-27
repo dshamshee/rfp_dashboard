@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { tenderTable } from "@/lib/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { tenderTable, discussionTable } from "@/lib/db/schema";
+import { usersTable } from "@/lib/db/schema/user";
+import { eq, desc, sql, countDistinct } from "drizzle-orm";
+import { GetServerSessionHere } from "@/app/api/auth/[...nextauth]/options";
 
 export async function getTendersAction() {
   try {
@@ -49,7 +51,7 @@ export async function updateTenderAction(id: string, data: any) {
     const [updated] = await db
       .update(tenderTable)
       .set({
-        tenderId: data.tenderId || null,
+        tenderId: data.tenderId,
         client: data.client,
         title: data.title,
         state: data.state || null,
@@ -89,8 +91,91 @@ export async function updateTenderAction(id: string, data: any) {
     revalidatePath("/");
     return { success: true, data: updated };
   } catch (error: any) {
+    const isDuplicate =
+      error?.code === "23505" ||
+      error?.cause?.code === "23505" ||
+      (error?.message && error.message.includes("duplicate key"));
+
+    if (isDuplicate) {
+      return {
+        success: false,
+        error: `A tender with Reference ID "${data.tenderId}" already exists. Please enter a unique Tender Reference ID.`,
+      };
+    }
+
     console.error("SERVER ERROR [updateTenderAction]:", error);
     return { success: false, error: "Failed to update tender details. Please try again." };
   }
 }
 
+export async function addDiscussionAction(tenderId: string, message: string) {
+  try {
+    const session = await GetServerSessionHere();
+    if (!session?.user?.id) {
+      return { success: false, error: "You must be logged in to add a discussion." };
+    }
+
+    await db.insert(discussionTable).values({
+      tenderId,
+      userId: session.user.id,
+      message,
+    });
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    console.error("SERVER ERROR [addDiscussionAction]:", error);
+    return { success: false, error: "Failed to add discussion. Please try again." };
+  }
+}
+
+export async function getDiscussionsAction(tenderId: string) {
+  try {
+    const discussions = await db
+      .select({
+        id: discussionTable.id,
+        tenderId: discussionTable.tenderId,
+        userId: discussionTable.userId,
+        message: discussionTable.message,
+        createdAt: discussionTable.createdAt,
+        updatedAt: discussionTable.updatedAt,
+        userName: usersTable.name,
+        userEmail: usersTable.email,
+      })
+      .from(discussionTable)
+      .leftJoin(usersTable, eq(discussionTable.userId, usersTable.id))
+      .where(eq(discussionTable.tenderId, tenderId))
+      .orderBy(desc(discussionTable.createdAt));
+
+    return { success: true, data: discussions };
+  } catch (error: any) {
+    console.error("SERVER ERROR [getDiscussionsAction]:", error);
+    return { success: false, error: "Failed to load discussions.", data: [] };
+  }
+}
+
+export async function getDiscussionCountAction() {
+  try {
+    const result = await db
+      .select({ count: countDistinct(discussionTable.tenderId) })
+      .from(discussionTable);
+
+    return { success: true, count: result[0]?.count ?? 0 };
+  } catch (error: any) {
+    console.error("SERVER ERROR [getDiscussionCountAction]:", error);
+    return { success: false, error: "Failed to get discussion count.", count: 0 };
+  }
+}
+
+export async function getTenderIdsWithDiscussionsAction() {
+  try {
+    const result = await db
+      .selectDistinct({ tenderId: discussionTable.tenderId })
+      .from(discussionTable);
+
+    return { success: true, data: result.map((r) => r.tenderId) };
+  } catch (error: any) {
+    console.error("SERVER ERROR [getTenderIdsWithDiscussionsAction]:", error);
+    return { success: false, error: "Failed to get tenders with discussions.", data: [] };
+  }
+}

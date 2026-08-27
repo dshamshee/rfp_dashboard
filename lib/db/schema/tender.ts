@@ -1,10 +1,11 @@
 import { boolean, check, date, integer, pgTable, real, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
+import { usersTable } from "./user";
 
 export const tenderTable = pgTable("tender", {
   id: varchar({ length: 128 }).primaryKey().$defaultFn(() => createId()),
-  tenderId: text("tender_id"),
+  tenderId: text("tender_id").unique().notNull(),
   client: text("client").notNull(),
   title: text("title").notNull(),
   state: text("state"),
@@ -56,3 +57,16 @@ export const tenderTable = pgTable("tender", {
 
 export type Tender = typeof tenderTable.$inferSelect;
 export type NewTender = typeof tenderTable.$inferInsert;
+
+
+export const discussionTable = pgTable("discussion", {
+  id: varchar({ length: 128 }).primaryKey().$defaultFn(() => createId()),
+  tenderId: varchar({ length: 128 }).notNull().references(() => tenderTable.id),
+  userId: varchar({ length: 128 }).notNull().references(() => usersTable.id),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).default(sql`(NOW() AT TIME ZONE 'Asia/Kolkata')`).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`(NOW() AT TIME ZONE 'Asia/Kolkata')`).notNull(),
+});
+
+export type Discussion = typeof discussionTable.$inferSelect;
+export type NewDiscussion = typeof discussionTable.$inferInsert;
