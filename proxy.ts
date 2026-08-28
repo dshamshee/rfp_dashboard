@@ -12,7 +12,8 @@ const adminRoutes = [
 const publicRoutes = [
   "/login",
   "/api/auth",
-  "/api/auth/signup"
+  "/api/auth/signup",
+  "/"
 ];
 
 function isMatch(pathname: string, prefixes: string[]) {

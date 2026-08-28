@@ -19,10 +19,10 @@ export function getMenuList(pathname: string): Group[] {
       groupLabel: "",
       menus: [
         {
-          href: "/",
+          href: "/dashboard",
           label: "Dashboard",
           icon: LayoutDashboard,
-          active: pathname === "/",
+          active: pathname === "/dashboard" || pathname === "/",
         },
       ],
     },

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { ContentLayout } from "@/components/content-layout";
-import { DataTable } from "./_components/data-table";
-import { columns } from "./_components/columns";
-import { useGetTendersQuery } from "./query/get-tenders";
-import { useGetDiscussionCountQuery, useGetTenderIdsWithDiscussionsQuery } from "./query/get-discussions";
+import { DataTable } from "../_components/data-table";
+import { columns } from "../_components/columns";
+import { useGetTendersQuery } from "../query/get-tenders";
+import { useGetDiscussionCountQuery, useGetTenderIdsWithDiscussionsQuery } from "../query/get-discussions";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,7 +77,7 @@ export default function DashboardPage() {
   const isActive = (mode: typeof tableFilterMode) => showTable && tableFilterMode === mode;
 
   return (
-    <ContentLayout title="Dashboard">
+    <ContentLayout title="MagNetix InfoSystems & Development Pvt. Ltd.">
       <div className="space-y-4">
         {/* Pre-Bid Alert */}
         {isLoading ? (
