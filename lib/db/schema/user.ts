@@ -1,15 +1,15 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
-import { check, integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { boolean, check, integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
   id: varchar({ length: 128 }).primaryKey().$defaultFn(() => createId()),
   name: text().notNull(),
   email: varchar({ length: 255 }).notNull().unique(),
   password: text().notNull(),
-  role: text().notNull()
-
+  role: text().notNull(),
+  isActive: boolean().default(true)
 }, 
 
 (table) => [

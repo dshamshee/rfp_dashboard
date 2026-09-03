@@ -24,7 +24,6 @@ import {
   User,
   Clock,
 } from "lucide-react";
-import { format } from "date-fns";
 
 interface ViewDiscussionsDialogProps {
   tenderId: string;
@@ -159,10 +158,15 @@ export function ViewDiscussionsDialog({
                           <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                             <Clock className="size-2.5" />
                             {d.createdAt
-                              ? format(
-                                  new Date(d.createdAt),
-                                  "dd MMM yyyy, hh:mm a"
-                                )
+                              ? new Date(d.createdAt).toLocaleString("en-IN", {
+                                  timeZone: "Asia/Kolkata",
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })
                               : "-"}
                           </span>
                         </div>

@@ -38,8 +38,8 @@ export const tenderTable = pgTable("tender", {
   remarks: text("remarks"),
   documentUrl: text("document_url"),
   insertedBy: text("inserted_by").notNull().default("MANUAL"),
-  createdAt: timestamp("created_at", { mode: "date" }).default(sql`NOW() AT TIME ZONE 'Asia/Kolkata'`).notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`NOW() AT TIME ZONE 'Asia/Kolkata'`).notNull(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).default(sql`NOW()`).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).default(sql`NOW()`).notNull(),
 }, (table) => [
   check(
     "priority_type_check",
@@ -61,11 +61,11 @@ export type NewTender = typeof tenderTable.$inferInsert;
 
 export const discussionTable = pgTable("discussion", {
   id: varchar({ length: 128 }).primaryKey().$defaultFn(() => createId()),
-  tenderId: varchar({ length: 128 }).notNull().references(() => tenderTable.id),
+  tenderId: varchar({ length: 128 }).notNull().references(() => tenderTable.id, { onDelete: "cascade" }),
   userId: varchar({ length: 128 }).notNull().references(() => usersTable.id),
   message: text("message").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).default(sql`(NOW() AT TIME ZONE 'Asia/Kolkata')`).notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`(NOW() AT TIME ZONE 'Asia/Kolkata')`).notNull(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).default(sql`NOW()`).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).default(sql`NOW()`).notNull(),
 });
 
 export type Discussion = typeof discussionTable.$inferSelect;

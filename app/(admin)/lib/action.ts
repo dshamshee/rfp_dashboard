@@ -24,7 +24,7 @@ export async function toggleBidSubmittedAction(id: string, isBidSubmitted: boole
   try {
     await db
       .update(tenderTable)
-      .set({ isBidSubmitted, updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'` })
+      .set({ isBidSubmitted, updatedAt: sql`NOW()` })
       .where(eq(tenderTable.id, id));
 
     revalidatePath("/");
@@ -83,7 +83,7 @@ export async function updateTenderAction(id: string, data: any) {
         nextActionDate: data.nextActionDate ? new Date(data.nextActionDate) : null,
         remarks: data.remarks || null,
         documentUrl: data.documentUrl || null,
-        updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
+        updatedAt: sql`NOW()`,
       })
       .where(eq(tenderTable.id, id))
       .returning();

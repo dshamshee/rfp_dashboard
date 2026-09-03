@@ -44,8 +44,8 @@ export async function createTenderAction(data: TenderFormData) {
       remarks: validatedData.remarks || null,
       documentUrl: validatedData.documentUrl || null,
       insertedBy: validatedData.insertedBy || "MANUAL",
-      createdAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
-      updatedAt: sql`NOW() AT TIME ZONE 'Asia/Kolkata'`,
+      createdAt: sql`NOW()`,
+      updatedAt: sql`NOW()`,
     }).returning();
 
     revalidatePath("/");

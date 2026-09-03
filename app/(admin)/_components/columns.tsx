@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MessageSquare, MessageSquarePlus, MoreHorizontal, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowUpDown, CheckCircle2, Copy, Eye, FileText, MessageSquare, MessageSquarePlus, MoreHorizontal, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
 import { Tender } from "@/lib/db/schema";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { deleteTenderAction, toggleBidSubmittedAction } from "../lib/action";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -300,6 +310,8 @@ export const columns: ColumnDef<Tender>[] = [
       const [showEdit, setShowEdit] = useState(false);
       const [showAddDiscussion, setShowAddDiscussion] = useState(false);
       const [showViewDiscussions, setShowViewDiscussions] = useState(false);
+      const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+      const [isDeleting, setIsDeleting] = useState(false);
       const queryClient = useQueryClient();
 
       const handleToggle = async () => {
@@ -314,14 +326,20 @@ export const columns: ColumnDef<Tender>[] = [
       };
 
       const handleDelete = async () => {
-        if (confirm(`Are you sure you want to delete tender "${tender.title}"?`)) {
+        setIsDeleting(true);
+        try {
           const res = await deleteTenderAction(tender.id);
           if (res.success) {
             toast.success("Tender deleted successfully");
             queryClient.invalidateQueries({ queryKey: ["tenders"] });
+            queryClient.invalidateQueries({ queryKey: ["discussion-count"] });
+            queryClient.invalidateQueries({ queryKey: ["tender-ids-with-discussions"] });
           } else {
             toast.error(res.error || "Failed to delete tender. Please try again.");
           }
+        } finally {
+          setIsDeleting(false);
+          setShowDeleteConfirm(false);
         }
       };
 
@@ -402,7 +420,7 @@ export const columns: ColumnDef<Tender>[] = [
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10">
+                <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="text-destructive focus:bg-destructive/10">
                   <Trash2 className="mr-2 size-4" />
                   Delete
                 </DropdownMenuItem>
@@ -437,6 +455,39 @@ export const columns: ColumnDef<Tender>[] = [
             open={showViewDiscussions}
             onOpenChange={setShowViewDiscussions}
           />
+
+          <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="size-5 text-destructive" />
+                  Delete Tender
+                </AlertDialogTitle>
+                <AlertDialogDescription className="space-y-2">
+                  <span className="block">
+                    Are you sure you want to delete tender{" "}
+                    <span className="font-semibold text-foreground">&quot;{tender.title}&quot;</span>?
+                  </span>
+                  <span className="block text-destructive font-medium">
+                    ⚠ Warning: If this tender has any discussions, all associated discussions will also be permanently deleted.
+                  </span>
+                  <span className="block">
+                    This action cannot be undone.
+                  </span>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Delete Tender"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       );
     },
