@@ -70,3 +70,19 @@ export const discussionTable = pgTable("discussion", {
 
 export type Discussion = typeof discussionTable.$inferSelect;
 export type NewDiscussion = typeof discussionTable.$inferInsert;
+
+
+export const incomingBidTable = pgTable("incoming_bid",{
+  id: varchar({ length: 128 }).primaryKey().$defaultFn(() => createId()),
+  userId: varchar({ length: 128 }).notNull().references(() => usersTable.id),
+  Department: text().notNull(),
+  bidDetails: text().notNull(),
+  oemDetails: text(),
+  remarks: text(),
+  publicationDate: timestamp("publication_date", { mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).default(sql`NOW()`).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).default(sql`NOW()`).notNull(),
+});
+
+export type IncomingBid = typeof incomingBidTable.$inferSelect;
+export type NewIncomingBid = typeof incomingBidTable.$inferInsert;
